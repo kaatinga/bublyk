@@ -78,7 +78,7 @@ func TestDate_Format(t *testing.T) {
 		layout string
 		want   string
 	}{
-		{maximumDate, PostgreSQLFormat, "2127-12-31"},
+		{maximumDate, postgreSQLFormat, "2127-12-31"},
 		{maximumDate, time.RFC822, "31 Dec 27 00:00 UTC"},
 	}
 	for _, tt := range tests {

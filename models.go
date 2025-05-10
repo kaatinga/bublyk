@@ -16,7 +16,7 @@ const (
 	minimumDate Date = 0b0000000000100001 // 2000-01-01
 	noDate      Date = 0
 
-	PostgreSQLFormat = "2006-01-02"
+	postgreSQLFormat = "2006-01-02"
 )
 
 func Now() Date {
@@ -149,7 +149,7 @@ func (thisDate Date) DMYWithDots() string {
 
 func (thisDate Date) Format(layout string) string {
 	switch layout {
-	case PostgreSQLFormat:
+	case postgreSQLFormat:
 		return thisDate.String()
 	default:
 		return makeTime(thisDate.Year(), thisDate.Month(), thisDate.Day()).Format(layout)
@@ -157,7 +157,7 @@ func (thisDate Date) Format(layout string) string {
 }
 
 func Parse(formattedDate string) (Date, error) {
-	if len([]rune(formattedDate)) != len([]rune(PostgreSQLFormat)) {
+	if len([]rune(formattedDate)) != len([]rune(postgreSQLFormat)) {
 		return 0, errors.New("incorrect date format")
 	}
 

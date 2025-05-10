@@ -32,7 +32,7 @@ func main() {
 	fmt.Println(date)
 
 	// Create a new Date instance from a time.Time instance
-	var t = time.Now()
+	var t = time.Now().AddDate(0, 0, 5)
 	date2 := bublyk.NewDateFromTime(&t)
 
 	// Print the current date

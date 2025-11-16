@@ -8,7 +8,6 @@ import (
 )
 
 const (
-	yearMask  = 0b1111111000000000
 	monthMask = 0b0000000111100000
 	dayMask   = 0b0000000000011111
 
@@ -215,39 +214,6 @@ func (thisDate Date) PreviousWeek() Date {
 		return NewDateFromTime(&timeDate)
 	}
 	return thisDate&^dayMask | (thisDate&dayMask - 7)
-}
-
-// NextMonth returns date which month number in incremented by one.
-// The month number may change greater if the source day does not exist in the next month.
-func (thisDate Date) NextMonth() Date {
-	if thisDate&dayMask > 28 {
-		timeDate := makeTime(thisDate.Year(), thisDate.Month(), thisDate.Day()).AddDate(0, 1, 0)
-		return NewDateFromTime(&timeDate)
-	}
-
-	if thisDate&monthMask>>5 == 12 {
-		if thisDate&yearMask>>9 == 127 { // we reached the maximum year
-			return maximumDate
-		}
-		return thisDate&^monthMask&^yearMask | ((1 << 5) | (thisDate&yearMask>>9+1)<<9) // January
-	}
-	return thisDate&^monthMask | ((((thisDate & monthMask) >> 5) + 1) << 5)
-}
-
-// PreviousMonth returns date which month number in decremented by one.
-// The month number may change greater if the source day does not exist in the previous month.
-func (thisDate Date) PreviousMonth() Date {
-	if thisDate.Day() > 28 {
-		timeDate := makeTime(thisDate.Year(), thisDate.Month(), thisDate.Day()).AddDate(0, -1, 0)
-		return NewDateFromTime(&timeDate)
-	}
-	if (thisDate&monthMask)>>5 == 1 {
-		if thisDate&yearMask == noDate { // we reached the minimum
-			return minimumDate
-		}
-		return thisDate&^monthMask&^yearMask | ((12 << 5) | (thisDate&yearMask>>9-1)<<9) // December
-	}
-	return thisDate&^monthMask | ((((thisDate & monthMask) >> 5) - 1) << 5)
 }
 
 func NewDate(year uint16, month, day byte) Date {

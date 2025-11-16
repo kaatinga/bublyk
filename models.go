@@ -225,7 +225,7 @@ func NewDate(year uint16, month, day byte) Date {
 	}
 	if day > 28 || month > 12 || day == 0 || month == 0 {
 		yearInt, monthMonth, dayInt := makeTime(year, month, day).Date()
-		year, month, day = uint16(yearInt), byte(monthMonth), byte(dayInt)
+		year, month, day = uint16(yearInt), byte(monthMonth), byte(dayInt) // #nosec G115 -- year is clamped to 2000-2127 range by makeTime
 	}
 	return composeDate(year, month, day)
 }

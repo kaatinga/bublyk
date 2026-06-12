@@ -16,14 +16,12 @@ const (
 
 	maximumDate Date = 0b1111111110011111 // 2127-12-31
 	minimumDate Date = 0b0000000000100001 // 2000-01-01
-	noDate      Date = 0
 
 	postgreSQLFormat = "2006-01-02"
 )
 
 func Now() Date {
-	now := time.Now().UTC()
-	return NewDateFromTime(&now)
+	return NewDateFromTime(time.Now().UTC())
 }
 
 func CurrentMonth() Date {
@@ -194,38 +192,34 @@ func Parse(formattedDate string) (Date, error) {
 	return NewDate(year, month, day), nil
 }
 
-func (thisDate Date) Time() *time.Time {
+func (thisDate Date) Time() time.Time {
 	return makeTime(thisDate.Year(), thisDate.Month(), thisDate.Day())
 }
 
 func (thisDate Date) NextDay() Date {
 	if thisDate.Day() > 27 {
-		timeDate := makeTime(thisDate.Year(), thisDate.Month(), thisDate.Day()).AddDate(0, 0, 1)
-		return NewDateFromTime(&timeDate)
+		return NewDateFromTime(thisDate.Time().AddDate(0, 0, 1))
 	}
 	return thisDate&^dayMask | (thisDate&dayMask + 1)
 }
 
 func (thisDate Date) PreviousDay() Date {
 	if thisDate.Day() == 1 {
-		timeDate := makeTime(thisDate.Year(), thisDate.Month(), thisDate.Day()).AddDate(0, 0, -1)
-		return NewDateFromTime(&timeDate)
+		return NewDateFromTime(thisDate.Time().AddDate(0, 0, -1))
 	}
 	return thisDate&^dayMask | (thisDate&dayMask - 1)
 }
 
 func (thisDate Date) NextWeek() Date {
 	if thisDate.Day() > 21 {
-		timeDate := makeTime(thisDate.Year(), thisDate.Month(), thisDate.Day()).AddDate(0, 0, 7)
-		return NewDateFromTime(&timeDate)
+		return NewDateFromTime(thisDate.Time().AddDate(0, 0, 7))
 	}
 	return thisDate&^dayMask | (thisDate&dayMask + 7)
 }
 
 func (thisDate Date) PreviousWeek() Date {
 	if thisDate.Day() < 8 {
-		timeDate := makeTime(thisDate.Year(), thisDate.Month(), thisDate.Day()).AddDate(0, 0, -7)
-		return NewDateFromTime(&timeDate)
+		return NewDateFromTime(thisDate.Time().AddDate(0, 0, -7))
 	}
 	return thisDate&^dayMask | (thisDate&dayMask - 7)
 }
@@ -251,16 +245,12 @@ func NewDate(year uint16, month, day byte) Date {
 	return composeDate(year, month, day)
 }
 
-func makeTime(year uint16, month, day byte) *time.Time {
-	newTime := time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC)
-	return &newTime
+func makeTime(year uint16, month, day byte) time.Time {
+	return time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC)
 }
 
 // NewDateFromTime create new date using time.Time model.
-func NewDateFromTime(t *time.Time) Date {
-	if t == nil {
-		return noDate
-	}
+func NewDateFromTime(t time.Time) Date {
 	year := t.Year()
 	if year < 2000 {
 		return minimumDate

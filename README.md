@@ -59,8 +59,7 @@ func main() {
 	}
 
 	// Convert from time.Time
-	t := time.Now().AddDate(0, 0, 5)
-	futureDate := bublyk.NewDateFromTime(&t)
+	futureDate := bublyk.NewDateFromTime(time.Now().AddDate(0, 0, 5))
 	fmt.Println("5 days from now:", futureDate)
 }
 ```
@@ -84,12 +83,11 @@ date := bublyk.NewDate(2024, 2, 29) // Leap day
 normalized := bublyk.NewDate(2024, 13, 1) // Becomes 2025-01-01
 ```
 
-#### `NewDateFromTime(t *time.Time) Date`
-Converts a `time.Time` to a `Date`. Returns zero date if `t` is nil.
+#### `NewDateFromTime(t time.Time) Date`
+Converts a `time.Time` to a `Date`.
 
 ```go
-t := time.Now()
-date := bublyk.NewDateFromTime(&t)
+date := bublyk.NewDateFromTime(time.Now())
 ```
 
 #### `CurrentMonth() Date`
@@ -182,7 +180,7 @@ european := date.DMYWithDots() // "25.12.2024"
 date := bublyk.NewDate(2024, 12, 25)
 
 // Convert to time.Time
-t := date.Time() // *time.Time in UTC
+t := date.Time() // time.Time in UTC
 ```
 
 ## Use Cases

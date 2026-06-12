@@ -22,7 +22,7 @@ func TestNewDate(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(fmt.Sprintf("%04d-%02d-%02d", tt.year, tt.month, tt.day), func(t *testing.T) {
 			newTime := time.Date(tt.year, time.Month(tt.month), tt.day, 0, 0, 0, 0, time.UTC)
-			date := NewDateFromTime(&newTime)
+			date := NewDateFromTime(newTime)
 			if uint16(tt.year) != date.Year() {
 				t.Errorf("Year is incorrect.\nhave %v\nwant %v", date.Year(), tt.year)
 			}
@@ -410,10 +410,6 @@ func TestDate_Time(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := tt.thisDate.Time()
-			if got == nil {
-				t.Errorf("Time() returned nil")
-				return
-			}
 			if got.Year() != int(tt.thisDate.Year()) {
 				t.Errorf("Time().Year() = %v, want %v", got.Year(), tt.thisDate.Year())
 			}
@@ -424,13 +420,6 @@ func TestDate_Time(t *testing.T) {
 				t.Errorf("Time().Day() = %v, want %v", got.Day(), tt.thisDate.Day())
 			}
 		})
-	}
-}
-
-func TestNewDateFromTime_Nil(t *testing.T) {
-	got := NewDateFromTime(nil)
-	if got != noDate {
-		t.Errorf("NewDateFromTime(nil) = %v, want %v", got, noDate)
 	}
 }
 

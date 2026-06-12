@@ -7,6 +7,9 @@ import (
 	faststrconv "github.com/kaatinga/strconv"
 )
 
+// ErrIncorrectFormat is returned by Parse when the input does not match the YYYY-MM-DD format.
+var ErrIncorrectFormat = errors.New("incorrect date format")
+
 const (
 	monthMask = 0b0000000111100000
 	dayMask   = 0b0000000000011111
@@ -51,7 +54,8 @@ func (thisDate Date) IsFuture() bool {
 	return thisDate > Now()
 }
 
-// MonthAfter checks whether the date at least one month after the target date or not.
+// MonthAfter reports whether the date falls in a later calendar month than the target date.
+// Days are ignored: 2021-06-01 is MonthAfter 2021-05-31.
 func (thisDate Date) MonthAfter(date Date) bool {
 	if thisDate.Year() == date.Year() {
 		return thisDate.Month() > date.Month()
@@ -59,7 +63,8 @@ func (thisDate Date) MonthAfter(date Date) bool {
 	return thisDate.Year() > date.Year()
 }
 
-// MonthBefore checks whether the date at least one month before the target date or not.
+// MonthBefore reports whether the date falls in an earlier calendar month than the target date.
+// Days are ignored: 2021-05-31 is MonthBefore 2021-06-01.
 func (thisDate Date) MonthBefore(date Date) bool {
 	if thisDate.Year() == date.Year() {
 		return thisDate.Month() < date.Month()
@@ -90,7 +95,7 @@ func format[V []byte | string](thisDate Date) V {
 		output[5] = month[0]
 		output[6] = month[1]
 	default:
-		output[5] = 48
+		output[5] = '0'
 		output[6] = month[0]
 	}
 	output[7] = '-'
@@ -100,7 +105,7 @@ func format[V []byte | string](thisDate Date) V {
 		output[8] = day[0]
 		output[9] = day[1]
 	default:
-		output[8] = 48
+		output[8] = '0'
 		output[9] = day[0]
 	}
 	return V(output)
@@ -115,6 +120,9 @@ func getDateAsBinaries(thisDate Date) ([]byte, []byte, []byte) {
 
 // DMYWithDots returns date as string in the DD.MM.YYYY format.
 func (thisDate Date) DMYWithDots() string {
+	if !thisDate.IsSet() {
+		return "null"
+	}
 	month, day, year := getDateAsBinaries(thisDate)
 	var output = make([]byte, 10)
 
@@ -123,7 +131,7 @@ func (thisDate Date) DMYWithDots() string {
 		output[0] = day[0]
 		output[1] = day[1]
 	default:
-		output[0] = 48
+		output[0] = '0'
 		output[1] = day[0]
 	}
 	output[2] = '.'
@@ -133,7 +141,7 @@ func (thisDate Date) DMYWithDots() string {
 		output[3] = month[0]
 		output[4] = month[1]
 	default:
-		output[3] = 48
+		output[3] = '0'
 		output[4] = month[0]
 	}
 	output[5] = '.'
@@ -147,6 +155,9 @@ func (thisDate Date) DMYWithDots() string {
 }
 
 func (thisDate Date) Format(layout string) string {
+	if !thisDate.IsSet() {
+		return "null"
+	}
 	switch layout {
 	case postgreSQLFormat:
 		return thisDate.String()
@@ -156,8 +167,11 @@ func (thisDate Date) Format(layout string) string {
 }
 
 func Parse(formattedDate string) (Date, error) {
-	if len([]rune(formattedDate)) != len([]rune(postgreSQLFormat)) {
-		return 0, errors.New("incorrect date format")
+	if len(formattedDate) != len(postgreSQLFormat) {
+		return 0, ErrIncorrectFormat
+	}
+	if formattedDate[4] != '-' || formattedDate[7] != '-' {
+		return 0, ErrIncorrectFormat
 	}
 
 	year, err := faststrconv.GetUint16(formattedDate[0:4])
@@ -225,7 +239,14 @@ func NewDate(year uint16, month, day byte) Date {
 	}
 	if day > 28 || month > 12 || day == 0 || month == 0 {
 		yearInt, monthMonth, dayInt := makeTime(year, month, day).Date()
-		year, month, day = uint16(yearInt), byte(monthMonth), byte(dayInt) // #nosec G115 -- year is clamped to 2000-2127 range by makeTime
+		// Normalization may move the date across a year boundary, back outside the supported range.
+		if yearInt < 2000 {
+			return minimumDate
+		}
+		if yearInt > 2127 {
+			return maximumDate
+		}
+		year, month, day = uint16(yearInt), byte(monthMonth), byte(dayInt) // #nosec G115 -- yearInt is within 2000-2127 here
 	}
 	return composeDate(year, month, day)
 }

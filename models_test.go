@@ -80,6 +80,8 @@ func TestDate_Format(t *testing.T) {
 	}{
 		{maximumDate, postgreSQLFormat, "2127-12-31"},
 		{maximumDate, time.RFC822, "31 Dec 27 00:00 UTC"},
+		{Date(0), postgreSQLFormat, "null"},
+		{Date(0), time.RFC822, "null"},
 	}
 	for _, tt := range cases {
 		t.Run(tt.want, func(t *testing.T) {
@@ -214,7 +216,7 @@ func TestParse(t *testing.T) {
 		{"2021-13-01", NewDate(2022, 1, 1), false},   // Month 13 normalizes to next year
 		{"2021-12-32", NewDate(2022, 1, 1), false},   // Day 32 normalizes to next month
 		{"21-12-01", Date(0), true},                  // Wrong format
-		{"2021/12/01", NewDate(2021, 12, 1), false},  // Parses numbers regardless of separator
+		{"2021/12/01", Date(0), true},                // Wrong separators
 		{"", Date(0), true},                          // Empty string
 		{"2021-1-1", Date(0), true},                  // Missing leading zeros
 		{"2021-00-15", NewDate(2020, 12, 15), false}, // Month 0 normalizes
@@ -222,6 +224,8 @@ func TestParse(t *testing.T) {
 		{"2021-XX-15", Date(0), true},                // Invalid month characters
 		{"2021-12-XX", Date(0), true},                // Invalid day characters
 		{"XXXX-12-15", Date(0), true},                // Invalid year characters
+		{"2127-12-32", maximumDate, false},           // Normalizes past maximum, clamped
+		{"2000-01-00", minimumDate, false},           // Normalizes below minimum, clamped
 	}
 	for _, tt := range tests {
 		t.Run(tt.formattedDate, func(t *testing.T) {
@@ -295,6 +299,7 @@ func TestDate_DMYWithDots(t *testing.T) {
 	}{
 		{NewDate(2000, 1, 1), "01.01.2000"},
 		{NewDate(2022, 11, 11), "11.11.2022"},
+		{Date(0), "null"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.want, func(t *testing.T) {
@@ -445,6 +450,10 @@ func TestNewDate_InvalidInputs(t *testing.T) {
 		{"Day 32 in January", 2021, 1, 32, 2021, 2, 1, "Day 32 should normalize"},
 		{"Day 30 in February non-leap", 2021, 2, 30, 2021, 3, 2, "Feb 30 should normalize"},
 		{"Day 31 in April", 2021, 4, 31, 2021, 5, 1, "April 31 should normalize"},
+		{"Month 13 at maximum year", 2127, 13, 1, 2127, 12, 31, "Normalization past maximum should clamp, not wrap"},
+		{"Day 32 at maximum date", 2127, 12, 32, 2127, 12, 31, "Normalization past maximum should clamp, not wrap"},
+		{"Day 0 at minimum date", 2000, 1, 0, 2000, 1, 1, "Normalization below minimum should clamp, not wrap"},
+		{"Month 0 at minimum year", 2000, 0, 15, 2000, 1, 1, "Normalization below minimum should clamp, not wrap"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

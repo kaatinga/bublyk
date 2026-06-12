@@ -218,11 +218,11 @@ if subscription.ExpiryDate < bublyk.Now() {
 	sendRenewalNotice()
 }
 
-// Calculate billing periods
+// Calculate billing periods (month 13 normalizes to January of the next year)
 billingDate := bublyk.NewDate(2024, 1, 1)
 for i := 0; i < 12; i++ {
 	processBilling(billingDate)
-	billingDate = billingDate.NextMonth() // Custom logic
+	billingDate = bublyk.NewDate(billingDate.Year(), billingDate.Month()+1, 1)
 }
 ```
 
